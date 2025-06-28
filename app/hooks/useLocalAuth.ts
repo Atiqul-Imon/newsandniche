@@ -4,12 +4,20 @@ import { useState, useEffect, useCallback } from "react";
 
 const LOCAL_STORAGE_KEY = "superblog_user";
 
+interface User {
+  _id: string;
+  id?: string;
+  name: string;
+  email: string;
+  role?: string;
+}
+
 export function useLocalAuth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Normalize user object to always have _id
-  function normalizeUser(u: any) {
+  function normalizeUser(u: User | null): User | null {
     if (!u) return null;
     if (u.id && !u._id) u._id = u.id;
     if (u._id && !u.id) u.id = u._id;
@@ -48,8 +56,9 @@ export function useLocalAuth() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.user));
       setUser(normalizeUser(data.user));
       return { success: true, user: normalizeUser(data.user) };
-    } catch (err: any) {
-      return { success: false, message: err.message };
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      return { success: false, message: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +78,9 @@ export function useLocalAuth() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.user));
       setUser(normalizeUser(data.user));
       return { success: true, user: normalizeUser(data.user) };
-    } catch (err: any) {
-      return { success: false, message: err.message };
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Registration failed";
+      return { success: false, message: errorMessage };
     } finally {
       setIsLoading(false);
     }

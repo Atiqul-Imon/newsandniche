@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -128,14 +127,14 @@ export default function AdminDashboard() {
         });
 
         // Set recent posts
-        const recent = postsData.posts?.slice(0, 5).map((post: any) => ({
+        const recent = postsData.posts?.slice(0, 5).map((post: { _id: string; title: string; author?: { name: string }; status: string; viewCount?: number; createdAt: string }) => ({
           id: post._id,
           title: post.title,
           author: post.author?.name || 'Unknown',
-          status: post.status,
+          status: post.status as 'published' | 'draft',
           views: post.viewCount || 0,
           createdAt: new Date(post.createdAt).toLocaleDateString(),
-        })) || [];
+        })) as RecentPost[] || [];
 
         setRecentPosts(recent);
       } catch (error) {
@@ -189,7 +188,7 @@ export default function AdminDashboard() {
     },
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
     switch (status) {
       case 'published':
         return 'success';
@@ -209,7 +208,7 @@ export default function AdminDashboard() {
             Dashboard
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Welcome back, {user?.name}! Here's what's happening with your blog.
+            Welcome back, {user?.name}! Here&apos;s what&apos;s happening with your blog.
           </Typography>
         </Box>
 
@@ -271,7 +270,7 @@ export default function AdminDashboard() {
                         <TableCell>
                           <Chip
                             label={post.status}
-                            color={getStatusColor(post.status) as any}
+                            color={getStatusColor(post.status)}
                             size="small"
                           />
                         </TableCell>

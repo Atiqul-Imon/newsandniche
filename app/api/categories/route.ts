@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(request.url);
     const language = searchParams.get('language');
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     if (language) query.language = language;
     const categories = await Category.find(query).sort({ name: 1 }).lean();
     return NextResponse.json({ categories });

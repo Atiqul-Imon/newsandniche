@@ -19,7 +19,7 @@ export async function GET(
     const post = await Post.findOne({ slug })
       .populate("author", "name email")
       .populate("category", "name slug language")
-      .lean() as any;
+      .lean() as Record<string, unknown>;
     if (!post) {
       return NextResponse.json(
         { message: "পোস্ট পাওয়া যায়নি" },

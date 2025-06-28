@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Navigation from "@/app/components/Navigation";
@@ -8,7 +7,7 @@ import { generateMetadata as generateSEOMetadata, generateStructuredData, genera
 import FeaturedImageWithFallback from "@/app/components/FeaturedImageWithFallback";
 
 // Helper function to safely get category name
-function getCategoryName(category: any): string {
+function getCategoryName(category: { name?: string } | string | null | undefined): string {
   if (typeof category === 'object' && category?.name) {
     return category.name;
   }
@@ -19,7 +18,7 @@ function getCategoryName(category: any): string {
 }
 
 // Helper function to safely get category slug
-function getCategorySlug(category: any): string {
+function getCategorySlug(category: { slug?: string } | string | null | undefined): string {
   if (typeof category === 'object' && category?.slug) {
     return category.slug;
   }
@@ -128,7 +127,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 // Fetch related posts with robust error handling
-async function getRelatedPosts(category: any, currentSlug: string) {
+async function getRelatedPosts(category: { _id?: string } | string | null | undefined, currentSlug: string) {
   if (!category || !currentSlug) {
     console.error('Missing category or currentSlug for related posts');
     return [];
@@ -157,22 +156,12 @@ async function getRelatedPosts(category: any, currentSlug: string) {
     }
 
     return data.posts
-      .filter((post: any) => post.slug !== currentSlug && post.title && post.slug)
+      .filter((post: { slug?: string; title?: string }) => post.slug !== currentSlug && post.title && post.slug)
       .slice(0, 3);
   } catch (error) {
     console.error('Error fetching related posts:', error);
     return [];
   }
-}
-
-// Calculate reading time with validation
-function calculateReadingTime(content: string): number {
-  if (!content || typeof content !== 'string') {
-    return 1;
-  }
-  const wordsPerMinute = 200;
-  const wordCount = content.replace(/<[^>]*>/g, '').split(/\s+/).length;
-  return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 }
 
 // Extract headings from content with validation
@@ -238,18 +227,6 @@ function ErrorFallback({ error }: { error: string }) {
         >
           Back to Blog
         </Link>
-      </div>
-    </div>
-  );
-}
-
-// Loading component
-function LoadingFallback() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">লোড হচ্ছে...</p>
       </div>
     </div>
   );
@@ -452,7 +429,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                 <div className="mt-8 p-6 bg-gray-50 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Posts</h3>
                   <div className="space-y-4">
-                    {relatedPosts.map((relatedPost: any) => (
+                    {relatedPosts.map((relatedPost: { slug: string; title: string; createdAt: string }) => (
                       <Link
                         key={relatedPost.slug}
                         href={`/blog/${relatedPost.slug}`}

@@ -1,12 +1,15 @@
 import Link from "next/link";
 import Navigation from "../components/Navigation";
 import { Suspense } from "react";
+import Image from 'next/image';
+import type { IPost } from '../models/Post';
+import type { ICategory } from '../models/Category';
 
 // Fetch posts from API
 async function getPosts() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/posts?status=published`, {
-      cache: 'no-store'
+      cache: 'force-cache'
     });
     
     if (!response.ok) {
@@ -24,7 +27,7 @@ async function getPosts() {
 async function getCategories() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/posts?status=published`, {
-      cache: 'no-store'
+      cache: 'force-cache'
     });
     
     if (!response.ok) {
@@ -32,7 +35,7 @@ async function getCategories() {
     }
     
     const data = await response.json();
-    const categories = data.posts.reduce((acc: any, post: any) => {
+    const categories = data.posts.reduce((acc: Record<string, number>, post: IPost & { category: ICategory | string }) => {
       // Handle category as object or string
       const categoryKey = typeof post.category === 'object' && post.category?.name 
         ? post.category.name 
@@ -50,9 +53,16 @@ async function getCategories() {
 }
 
 // Helper function to safely get category name
-function getCategoryName(category: any): string {
-  if (typeof category === 'object' && category?.name) {
-    return category.name;
+function getCategoryName(category: ICategory | string): string {
+  if (
+    typeof category === 'object' &&
+    category !== null &&
+    'name' in category &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    typeof (category as any).name === 'string'
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (category as ICategory).name;
   }
   if (typeof category === 'string') {
     return category;
@@ -61,8 +71,9 @@ function getCategoryName(category: any): string {
 }
 
 // Helper function to safely get category slug
-function getCategorySlug(category: any): string {
-  if (typeof category === 'object' && category?.slug) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getCategorySlug(category: ICategory | string): string {
+  if (typeof category === 'object' && category !== null && 'slug' in category) {
     return category.slug;
   }
   if (typeof category === 'string') {
@@ -125,15 +136,11 @@ async function BlogPosts() {
 
       {/* Posts Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-        {posts.map((post: any) => (
-          <article key={post._id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+        {posts.map((post: IPost & { category: ICategory | string }) => (
+          <article key={String(post._id)} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
             <div className="h-48 bg-gray-200 relative">
               {post.featuredImage ? (
-                <img 
-                  src={post.featuredImage} 
-                  alt={post.title}
-                  className="w-full h-full object-cover"
-                />
+                <Image src={post.featuredImage} alt={post.title} width={800} height={400} className="w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-500">
                   <span className="text-4xl">📷</span>
@@ -160,7 +167,7 @@ async function BlogPosts() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-sm text-gray-500 bengali-text">
                   <span className="mr-2">👤</span>
-                  <span>{post.author?.name || 'অজানা লেখক'}</span>
+                  <span>{typeof post.author === 'object' && post.author && 'name' in post.author ? (post.author as { name: string }).name : 'অজানা লেখক'}</span>
                 </div>
                 <Link 
                   href={`/blog/${post.slug}`}

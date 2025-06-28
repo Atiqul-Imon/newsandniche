@@ -28,9 +28,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
     modifiedTime,
     author,
     section,
-    tags = [],
-    readingTime,
-    wordCount
+    tags = []
   } = config;
 
   const siteName = 'News&Niche';

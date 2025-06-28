@@ -1,11 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import Navigation from "./components/Navigation";
 import { Suspense } from "react";
+import Image from 'next/image';
+import type { IPost } from './models/Post';
+import type { ICategory } from './models/Category';
+import type { Types } from 'mongoose';
 
 // Helper function to safely get category name
-function getCategoryName(category: any): string {
-  if (typeof category === 'object' && category?.name) {
+function getCategoryName(category: ICategory | string | Types.ObjectId): string {
+  if (typeof category === 'object' && 'name' in category && category.name) {
     return category.name;
   }
   if (typeof category === 'string') {
@@ -18,7 +21,7 @@ function getCategoryName(category: any): string {
 async function getFeaturedPosts() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/posts?status=published&limit=3`, {
-      cache: 'no-store'
+      cache: 'force-cache'
     });
     
     if (!response.ok) {
@@ -65,13 +68,15 @@ async function FeaturedPosts(props: { limit: number }) {
 
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {posts.slice(0, props.limit).map((post: any) => (
-        <article key={post._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+      {posts.slice(0, props.limit).map((post: IPost) => (
+        <article key={String(post._id)} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
           <div className="h-48 bg-gray-200 relative">
             {post.featuredImage ? (
-              <img 
+              <Image 
                 src={post.featuredImage} 
                 alt={post.title}
+                width={800}
+                height={400}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -105,7 +110,7 @@ async function FeaturedPosts(props: { limit: number }) {
 async function getLatestPosts(limit = 6) {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/posts?status=published&limit=${limit}`, {
-      cache: 'no-store'
+      cache: 'force-cache'
     });
     if (!response.ok) throw new Error('Failed to fetch posts');
     return await response.json();
@@ -146,11 +151,11 @@ async function LatestPosts({ limit = 6 }) {
   }
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {posts.map((post: any) => (
-        <article key={post._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+      {posts.map((post: IPost) => (
+        <article key={String(post._id)} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
           <div className="h-48 bg-gray-200 relative">
             {post.featuredImage ? (
-              <img src={post.featuredImage} alt={post.title} className="w-full h-full object-cover" />
+              <Image src={post.featuredImage} alt={post.title} width={800} height={400} className="w-full h-full object-cover" />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-gray-500">
                 <span className="text-4xl">📷</span>

@@ -23,10 +23,6 @@ import {
   DialogActions,
   Alert,
   LinearProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import {
   Add,
@@ -395,7 +391,7 @@ export default function CategoriesPage() {
           <DialogTitle>Delete Category</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete "{categoryToDelete?.name}"? 
+              Are you sure you want to delete &quot;{categoryToDelete?.name}&quot;? 
               {categoryToDelete && categoryToDelete.postCount > 0 && (
                 <Typography component="span" color="error" sx={{ fontWeight: 'bold' }}>
                   {' '}This category has {categoryToDelete.postCount} posts and deleting it may affect those posts.

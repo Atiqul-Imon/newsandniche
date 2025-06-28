@@ -1,5 +1,10 @@
 import { MetadataRoute } from 'next';
-import { generateSitemapUrl } from './lib/seo';
+
+interface Post {
+  slug: string;
+  updatedAt?: string;
+  createdAt: string;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://newsandniche.com';
@@ -16,10 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Get all published posts from API
-  let posts: any[] = [];
+  let posts: Post[] = [];
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/posts?status=published&limit=1000`, {
-      cache: 'no-store'
+      cache: 'force-cache'
     });
     
     if (response.ok) {

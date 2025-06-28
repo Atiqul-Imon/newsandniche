@@ -1,7 +1,7 @@
 'use client';
 
 interface StructuredDataProps {
-  data: any;
+  data: unknown;
 }
 
 export default function StructuredData({ data }: StructuredDataProps) {

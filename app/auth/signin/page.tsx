@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLocalAuth } from "@/app/hooks/useLocalAuth";
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +29,7 @@ export default function SignInPage() {
       } else {
         setError(result.message || "লগইন ব্যর্থ হয়েছে");
       }
-    } catch (error) {
+    } catch {
       setError("লগইন করার সময় একটি ত্রুটি ঘটেছে");
     } finally {
       setLoading(false);
@@ -136,5 +136,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInForm />
+    </Suspense>
   );
 } 

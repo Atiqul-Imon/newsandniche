@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 // Helper function to safely get category name
-function getCategoryName(category: any): string {
+function getCategoryName(category: { name?: string } | string | null | undefined): string {
   if (typeof category === 'object' && category?.name) {
     return category.name;
   }

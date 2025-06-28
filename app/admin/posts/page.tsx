@@ -30,8 +30,6 @@ import {
   Delete,
   Search,
   Visibility,
-  VisibilityOff,
-  MoreVert,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/app/components/AdminLayout';
@@ -130,7 +128,7 @@ export default function PostsPage() {
     setDeleteDialogOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
     switch (status) {
       case 'published':
         return 'success';
@@ -241,7 +239,7 @@ export default function PostsPage() {
                       <TableCell>
                         <Chip
                           label={post.status}
-                          color={getStatusColor(post.status) as any}
+                          color={getStatusColor(post.status)}
                           size="small"
                         />
                       </TableCell>
@@ -301,7 +299,7 @@ export default function PostsPage() {
           <DialogTitle>Delete Post</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete "{postToDelete?.title}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{postToDelete?.title}&quot;? This action cannot be undone.
             </Typography>
           </DialogContent>
           <DialogActions>

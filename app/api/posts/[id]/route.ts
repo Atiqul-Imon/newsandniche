@@ -9,15 +9,15 @@ async function getUserFromRequest(request: NextRequest) {
   const userId = request.headers.get('x-user-id');
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) return null;
   await connectDB();
-  const user = await User.findById(userId).lean() as any;
+  const user = await User.findById(userId).lean() as { _id: string; role?: string } | null;
   return user;
 }
 
 // GET - Fetch a post by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'Invalid post ID' }, { status: 400 });
     }
@@ -36,10 +36,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH - Update a post by ID
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'Invalid post ID' }, { status: 400 });
     }
@@ -55,30 +55,30 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (post.author.toString() !== user._id.toString() && user.role !== 'admin') {
       return NextResponse.json({ message: 'Not authorized' }, { status: 403 });
     }
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
     // Only allow updating certain fields
     const allowedFields = [
       'title', 'content', 'excerpt', 'category', 'tags', 'featuredImage', 'status',
       'seoTitle', 'seoDescription', 'seoKeywords', 'contentImages', 'isFeatured', 'affiliateLinks', 'publishedAt'
     ];
-    const update: any = {};
+    const update: Record<string, unknown> = {};
     for (const key of allowedFields) {
       if (body[key] !== undefined) update[key] = body[key];
     }
     // Validate category if present
-    if (update.category && !mongoose.Types.ObjectId.isValid(update.category)) {
+    if (update.category && typeof update.category === 'string' && !mongoose.Types.ObjectId.isValid(update.category)) {
       return NextResponse.json({ message: 'Invalid category ID' }, { status: 400 });
     }
     // Validate content length
-    if (update.content && update.content.length < 100) {
+    if (update.content && typeof update.content === 'string' && update.content.length < 100) {
       return NextResponse.json({ message: 'কনটেন্ট কমপক্ষে ১০০ অক্ষরের হতে হবে' }, { status: 400 });
     }
     // Validate excerpt length
-    if (update.excerpt && update.excerpt.length > 300) {
+    if (update.excerpt && typeof update.excerpt === 'string' && update.excerpt.length > 300) {
       return NextResponse.json({ message: 'সংক্ষিপ্ত বিবরণ ৩০০ অক্ষরের বেশি হতে পারবে না' }, { status: 400 });
     }
     // If title is updated, regenerate slug and ensure uniqueness
-    if (update.title) {
+    if (update.title && typeof update.title === 'string') {
       let slug = update.title
         .toLowerCase()
         .replace(/[^\u0080-\u00FFa-z0-9\s-]/g, '')
@@ -108,10 +108,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE - Delete a post by ID
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'Invalid post ID' }, { status: 400 });
     }

@@ -18,7 +18,7 @@ export interface IProduct extends Document {
   reviewCount?: number;
   availability: 'in_stock' | 'out_of_stock' | 'limited';
   features: string[];
-  specifications: Record<string, any>;
+  specifications: Record<string, unknown>;
   isActive: boolean;
   isFeatured: boolean;
   tags: string[];

@@ -2,14 +2,16 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/app/components/Navigation';
 import { generateMetadata as generateSEOMetadata } from '@/app/lib/seo';
+import type { IPost } from '../models/Post';
+import type { ICategory } from '../models/Category';
+import Image from 'next/image';
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; page?: string; category?: string }>;
 }
 
-// Helper function to safely get category name
-function getCategoryName(category: any): string {
-  if (typeof category === 'object' && category?.name) {
+function getCategoryName(category: ICategory | string): string {
+  if (typeof category === 'object' && category !== null && 'name' in category) {
     return category.name;
   }
   if (typeof category === 'string') {
@@ -88,7 +90,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </h1>
           {query && (
             <p className="text-gray-600">
-              {total} results found for "{query}"
+              {total} results found for &quot;{query}&quot;
             </p>
           )}
         </div>
@@ -116,7 +118,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               No Results Found
             </h2>
             <p className="text-gray-600 mb-8">
-              We couldn't find any articles matching "{query}". Try different keywords or browse our categories.
+              We couldn&apos;t find any articles matching &quot;{query}&quot;. Try different keywords or browse our categories.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
@@ -143,14 +145,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <>
             {/* Search Results */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-              {posts.map((post: any) => (
-                <article key={post._id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              {posts.map((post: IPost & { category: ICategory | string }) => (
+                <article key={String(post._id)} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                   <div className="h-48 bg-gray-200 relative">
                     {post.featuredImage ? (
-                      <img
+                      <Image
                         src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-full object-cover"
+                        width={300}
+                        height={200}
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -179,7 +183,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     </p>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">
-                        By {post.author?.name || 'Unknown Author'}
+                        By {typeof post.author === 'object' && post.author && 'name' in post.author ? (post.author as { name: string }).name : 'Unknown Author'}
                       </span>
                       {post.tags && post.tags.length > 0 && (
                         <div className="flex gap-1">

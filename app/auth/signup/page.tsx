@@ -50,7 +50,7 @@ export default function SignUpPage() {
       } else {
         setError(result.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে");
       }
-    } catch (error) {
+    } catch {
       setError("রেজিস্ট্রেশন ব্যর্থ হয়েছে");
     } finally {
       setLoading(false);

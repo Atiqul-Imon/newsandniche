@@ -13,15 +13,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   Alert,
   LinearProgress,
-  Grid,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Save,
@@ -58,7 +57,6 @@ export default function CreatePost() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentImagesInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState<{_id: string, name: string, slug: string, language: string}[]>([]);
-  const [categoryLang, setCategoryLang] = useState<'bn'|'en'>('bn');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: '', description: '', language: 'bn' });
   const [categoryLoading, setCategoryLoading] = useState(false);
@@ -68,7 +66,9 @@ export default function CreatePost() {
   const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -102,7 +102,7 @@ export default function CreatePost() {
       });
       const data = await res.json();
       setFormData(prev => ({ ...prev, featuredImage: data.secure_url }));
-    } catch (err) {
+    } catch {
       setError('Image upload failed');
     } finally {
       setUploading(false);
@@ -130,7 +130,7 @@ export default function CreatePost() {
         });
         const data = await res.json();
         urls.push(data.secure_url);
-      } catch (err) {
+      } catch {
         setError('One or more content images failed to upload');
       }
     }
@@ -204,7 +204,7 @@ export default function CreatePost() {
           router.push('/admin/posts');
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     } finally {
       setIsSubmitting(false);
@@ -216,17 +216,17 @@ export default function CreatePost() {
     const fetchCategories = async () => {
       setCategoryLoading(true);
       try {
-        const res = await fetch(`/api/categories?language=${categoryLang}`);
+        const res = await fetch('/api/categories');
         const data = await res.json();
         setCategories(data.categories || []);
-      } catch (err) {
+      } catch {
         setCategoryError('Failed to load categories');
       } finally {
         setCategoryLoading(false);
       }
     };
     fetchCategories();
-  }, [categoryLang, showCategoryModal]);
+  }, [showCategoryModal]);
 
   // Create new category
   const handleCreateCategory = async () => {
@@ -252,7 +252,7 @@ export default function CreatePost() {
       } else {
         setCategoryError(data.message || 'Failed to create category');
       }
-    } catch (err) {
+    } catch {
       setCategoryError('Failed to create category');
     } finally {
       setCategoryLoading(false);

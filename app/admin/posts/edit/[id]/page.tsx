@@ -6,12 +6,32 @@ import RichTextEditor from "@/app/components/RichTextEditor";
 import { useLocalAuth } from "@/app/hooks/useLocalAuth";
 import { Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 
+interface FormData {
+  title: string;
+  content: string;
+  excerpt: string;
+  featuredImage: string;
+  category: string;
+  tags: string;
+  seoKeywords: string;
+  seoTitle: string;
+  seoDescription: string;
+  status: 'draft' | 'published';
+  author?: { _id: string };
+}
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
 export default function EditPostPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user, isLoading: authLoading } = useLocalAuth();
-  const [formData, setFormData] = useState<any>(null);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -34,8 +54,9 @@ export default function EditPostPage() {
           seoKeywords: data.post.seoKeywords?.join(", ") || "",
           category: data.post.category?._id || data.post.category || ""
         });
-      } catch (err: any) {
-        setError(err.message || "Failed to load post");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load post";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -54,41 +75,50 @@ export default function EditPostPage() {
     fetchCategories();
   }, []);
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+    setFormData((prev: FormData | null) => prev ? { ...prev, [name]: value } : null);
+  };
+
+  const handleSelectChange = (e: { target: { name?: string; value: unknown } }) => {
+    const { name, value } = e.target;
+    setFormData((prev: FormData | null) => prev ? { ...prev, [name as string]: value as string } : null);
   };
 
   const handleContentChange = (content: string) => {
-    setFormData((prev: any) => ({ ...prev, content }));
+    setFormData((prev: FormData | null) => prev ? { ...prev, content } : null);
   };
 
   const validateForm = () => {
-    if (!formData.title?.trim()) {
+    if (!formData?.title?.trim()) {
       setError("Title is required");
       return false;
     }
-    if (!formData.content?.trim() || formData.content.length < 100) {
+    if (!formData?.content?.trim() || formData.content.length < 100) {
       setError("Content must be at least 100 characters");
       return false;
     }
-    if (!formData.excerpt?.trim()) {
+    if (!formData?.excerpt?.trim()) {
       setError("Excerpt is required");
       return false;
     }
-    if (!formData.category) {
+    if (!formData?.category) {
       setError("Please select a category");
       return false;
     }
-    if (!formData.featuredImage?.trim()) {
+    if (!formData?.featuredImage?.trim()) {
       setError("Featured image is required");
       return false;
     }
     return true;
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formData) {
+      setError("Form data is not available");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     setSuccess("");
@@ -123,13 +153,13 @@ export default function EditPostPage() {
         const text = await response.text();
         setError(text || "Failed to update post");
       } else {
-        const data = await response.json();
+        await response.json();
         setSuccess("Post updated successfully!");
         setTimeout(() => {
           router.push("/admin/posts");
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError("Network error occurred");
     } finally {
       setIsSubmitting(false);
@@ -195,7 +225,7 @@ export default function EditPostPage() {
                 type="text"
                 id="title"
                 name="title"
-                value={formData.title}
+                value={formData?.title || ''}
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
@@ -209,7 +239,7 @@ export default function EditPostPage() {
               <textarea
                 id="excerpt"
                 name="excerpt"
-                value={formData.excerpt}
+                value={formData?.excerpt || ''}
                 onChange={handleInputChange}
                 rows={3}
                 required
@@ -217,14 +247,14 @@ export default function EditPostPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                 placeholder="Enter post excerpt (max 300 characters)"
               />
-              <p className="text-sm text-gray-500 mt-1">{formData.excerpt?.length || 0}/300</p>
+              <p className="text-sm text-gray-500 mt-1">{formData?.excerpt?.length || 0}/300</p>
             </div>
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
               <select
                 id="category"
                 name="category"
-                value={formData.category}
+                value={formData?.category || ''}
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
@@ -242,9 +272,9 @@ export default function EditPostPage() {
                   labelId="status-label"
                   id="status"
                   name="status"
-                  value={formData.status || 'draft'}
+                  value={formData?.status || 'draft'}
                   label="Status"
-                  onChange={handleInputChange}
+                  onChange={handleSelectChange}
                 >
                   <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="published">Published</MenuItem>
@@ -259,10 +289,10 @@ export default function EditPostPage() {
                 type="text"
                 id="tags"
                 name="tags"
-                value={formData.tags}
+                value={formData?.tags || ''}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                placeholder="technology, programming, web development"
+                placeholder="tag1, tag2, tag3"
               />
             </div>
             <div>
@@ -273,7 +303,7 @@ export default function EditPostPage() {
                 type="text"
                 id="seoTitle"
                 name="seoTitle"
-                value={formData.seoTitle}
+                value={formData?.seoTitle || ''}
                 onChange={handleInputChange}
                 maxLength={60}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
@@ -287,7 +317,7 @@ export default function EditPostPage() {
               <textarea
                 id="seoDescription"
                 name="seoDescription"
-                value={formData.seoDescription}
+                value={formData?.seoDescription || ''}
                 onChange={handleInputChange}
                 maxLength={160}
                 rows={2}
@@ -297,16 +327,16 @@ export default function EditPostPage() {
             </div>
             <div>
               <label htmlFor="seoKeywords" className="block text-sm font-medium text-gray-700 mb-2">
-                SEO Keywords (comma separated)
+                SEO Keywords (separate with commas)
               </label>
               <input
                 type="text"
                 id="seoKeywords"
                 name="seoKeywords"
-                value={formData.seoKeywords}
+                value={formData?.seoKeywords || ''}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                placeholder="keyword1, keyword2, ..."
+                placeholder="keyword1, keyword2, keyword3"
               />
             </div>
             <div>
@@ -317,7 +347,7 @@ export default function EditPostPage() {
                 type="text"
                 id="featuredImage"
                 name="featuredImage"
-                value={formData.featuredImage}
+                value={formData?.featuredImage || ''}
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
@@ -329,11 +359,11 @@ export default function EditPostPage() {
                 Content * (minimum 100 characters)
               </label>
               <RichTextEditor
-                content={formData.content}
+                content={formData?.content || ''}
                 onChange={handleContentChange}
               />
               <p className="text-sm text-gray-500 mt-1">
-                Character count: {formData.content.replace(/<[^>]*>/g, '').length}
+                Character count: {formData?.content?.replace(/<[^>]*>/g, '').length || 0}
               </p>
             </div>
             <div className="flex justify-end space-x-4">

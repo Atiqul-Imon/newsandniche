@@ -137,7 +137,7 @@ export default function SearchBar() {
               href={`/search?q=${encodeURIComponent(query)}`}
               className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
             >
-              View all results for "{query}"
+              View all results for &quot;{query}&quot;
             </Link>
           </div>
         </div>

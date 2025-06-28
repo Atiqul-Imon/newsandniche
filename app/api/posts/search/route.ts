@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build search filter
-    const filter: any = {
+    const filter: Record<string, unknown> = {
       status,
       $or: [
         { title: { $regex: query, $options: 'i' } },
@@ -61,7 +61,9 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(total / limit);
 
     // Highlight search terms in results
-    const highlightedPosts = posts.map((post: any) => ({
+    // Using type assertion due to complex MongoDB lean() result structure
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const highlightedPosts = (posts as any[]).map((post: any) => ({
       ...post,
       title: highlightText(post.title, query),
       excerpt: highlightText(post.excerpt, query),

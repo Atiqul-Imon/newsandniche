@@ -4,8 +4,6 @@ import "@/app/models/Post";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Post from "@/app/models/Post";
-import User from "@/app/models/User";
-import Category from "@/app/models/Category";
 import mongoose from "mongoose";
 
 // GET - Fetch all posts with pagination and filtering
@@ -24,7 +22,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build query
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     if (category) {
       if (mongoose.Types.ObjectId.isValid(category)) {
         query.category = new mongoose.Types.ObjectId(category);
@@ -55,11 +53,25 @@ export async function GET(request: NextRequest) {
       .populate("category", "name slug language")
       .lean();
 
+    // Ensure category is always a plain object or string
+    const normalizedPosts = posts.map((post: { category?: { name: string } | string | mongoose.Types.ObjectId; [key: string]: unknown }) => {
+      if (post.category && typeof post.category === 'object' && 'name' in post.category) {
+        // Already populated as object
+        return post;
+      } else if (typeof post.category === 'string') {
+        // Already a string
+        return post;
+      } else {
+        // Fallback: set to 'Uncategorized'
+        return { ...post, category: 'Uncategorized' };
+      }
+    });
+
     // Get total count for pagination
     const total = await Post.countDocuments(query);
 
     return NextResponse.json({
-      posts,
+      posts: normalizedPosts,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
